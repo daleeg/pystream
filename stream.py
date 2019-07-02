@@ -27,6 +27,7 @@ type_map = {
 
 LITTLE_ENDIAN = "little"
 BIG_ENDIAN = "big"
+NETWORK_ORDER_ENDIAN = "network_order"
 
 
 class ParserError(Exception):
@@ -40,6 +41,8 @@ def gen_format(type_list, endian=LITTLE_ENDIAN):
         _fmt += "<"
     elif endian == BIG_ENDIAN:
         _fmt += ">"
+    elif endian == NETWORK_ORDER_ENDIAN:
+        _fmt += "!"
     else:
         raise ParserError("bad endian")
 

@@ -6,7 +6,7 @@ import struct
 from collections import OrderedDict
 import logging
 
-__all__ = ["dump", "load"]
+__all__ = ["dump", "load", "LITTLE_ENDIAN", "BIG_ENDIAN"]
 
 LOG = logging.getLogger(__name__)
 type_map = {
@@ -64,7 +64,7 @@ def yaml_load(stream):
 
 
 @lru_cache(maxsize=None)
-def struct_parser(_struct):
+def struct_parser(_struct, endian):
     struct_info = yaml_load(_struct)
     for k, value in struct_info.items():
         _struct_name = k
@@ -73,7 +73,7 @@ def struct_parser(_struct):
         for var, _type in value.items():
             _struct_var.append(var)
             _struct_type.append(_type)
-        _fmt, _types = gen_format(_struct_type)
+        _fmt, _types = gen_format(_struct_type, endian)
         LOG.debug(_struct_name)
         LOG.debug(_struct_var)
         LOG.debug(_types)
@@ -108,8 +108,8 @@ def gen_result_cls(name):
     return type(name.title(), (Result,), {})
 
 
-def load(stream, _struct):
-    name, vars, _types, _fmt = struct_parser(_struct)
+def load(stream, _struct, endian=LITTLE_ENDIAN):
+    name, vars, _types, _fmt = struct_parser(_struct, endian)
     result_list = struct.unpack(_fmt, stream)
     result = OrderedDict()
     for i, key in enumerate(vars):
@@ -121,13 +121,13 @@ def load(stream, _struct):
     return cls(name=name, _data=result)
 
 
-def dump(result, _struct):
+def dump(result, _struct, endian=LITTLE_ENDIAN):
     if isinstance(result, Result):
         data = result.data
     else:
         data = result
     data_list = []
-    _, vars, _types, _fmt = struct_parser(_struct)
+    _, vars, _types, _fmt = struct_parser(_struct, endian)
     for i, var in enumerate(vars):
         value = data[var]
         if not isinstance(value, list):
